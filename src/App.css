@@ -1,2 +1,52 @@
 @import "tailwindcss";
 
+
+.animate-fadeIn {
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.transform {
+    transition: transform 0.3s ease-in-out;
+}
+
+to {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@layers base {
+    :root {
+        --color-primarys: #4CAF50;
+        --color-secondary: #81C784;
+        --color-accent: #388E3C;
+        --color-background: #F1F8E9;
+        --color-text: #212121;
+        /*     ////////////////////////////////////////////////////:
+ */
+        --color-primary: #1d5d43;
+        --color-white: #ffffff;
+        --color-hover: #164933;
+        --color-light-gray: #f8f9fa;
+        --color-dark-text: #333333;
+    }
+}
+
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}

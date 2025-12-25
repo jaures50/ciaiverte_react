@@ -1,285 +1,433 @@
-import { NavLink } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
 // Interfaces TypeScript
 interface DropdownItem {
-    to: string;
-    label: string;
+  to: string;
+  label: string;
 }
 
 interface NavLinkBase {
-    label: string;
-    type: 'link' | 'dropdown';
+  label: string;
+  type: 'link' | 'dropdown';
 }
 
 interface SimpleLink extends NavLinkBase {
-    type: 'link';
-    to: string;
+  type: 'link';
+  to: string;
 }
 
 interface DropdownLink extends NavLinkBase {
-    type: 'dropdown';
-    submenu: DropdownItem[];
+  type: 'dropdown';
+  submenu: DropdownItem[];
 }
 
 type NavLinkItem = SimpleLink | DropdownLink;
 
+// Constantes de couleurs
+const COLORS = {
+  primary: '#1d5d43',
+  white: '#ffffff',
+  hover: '#164933',
+  lightGray: '#f8f9fa',
+  darkText: '#333333',
+} as const;
+
 // Composant Dropdown
 interface DropdownProps {
-    label: string;
-    items: DropdownItem[];
-    isMobile?: boolean;
-    onItemClick?: () => void;
+  label: string;
+  items: DropdownItem[];
+  isMobile?: boolean;
+  onItemClick?: () => void;
 }
 
 const Dropdown = ({ label, items, isMobile = false, onItemClick }: DropdownProps) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Ferme le dropdown en cliquant à l'extérieur
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
+  // Ferme le dropdown en cliquant à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    if (isMobile) {
-        return (
-            <div className="relative">
-                <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="flex justify-between w-full px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
-                >
-                    {label}
-                    <svg
-                        className={`ml-2 h-5 w-5 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
+  const toggleDropdown = useCallback(() => setIsOpen(prev => !prev), []);
+  const closeDropdown = useCallback(() => setIsOpen(false), []);
 
-                {isOpen && (
-                    <div className="ml-4 mt-1 space-y-1">
-                        {items.map((item) => (
-                            <NavLink
-                                key={item.to}
-                                to={item.to}
-                                className={({ isActive }: { isActive: boolean }) =>
-                                    `block px-3 py-2 rounded-md text-sm font-medium ${isActive
-                                        ? 'bg-gray-700 text-white'
-                                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                    }`
-                                }
-                                onClick={() => {
-                                    setIsOpen(false);
-                                    onItemClick?.();
-                                }}
-                            >
-                                {item.label}
-                            </NavLink>
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    }
+  const dropdownContent = useMemo(() => (
+    items.map((item) => (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={({ isActive }) =>
+          `block px-6 py-3 text-base transition-colors whitespace-nowrap min-w-[120px] ${isActive
+            ? `bg-[${COLORS.primary}] text-white`
+            : `text-[${COLORS.darkText}] hover:bg-[${COLORS.primary}] hover:text-white`
+          }`
+        }
+        style={({ isActive }) => ({
+          backgroundColor: isActive ? COLORS.primary : COLORS.white,
+          color: isActive ? COLORS.white : COLORS.darkText,
+        })}
+        onClick={closeDropdown}
+      >
+        {item.label}
+      </NavLink>
+    ))
+  ), [items, closeDropdown]);
 
-    // Version Desktop
+  const mobileContent = useMemo(() => (
+    items.map((item) => (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={({ isActive }) =>
+          `block px-4 py-3 rounded-md text-base font-medium whitespace-nowrap ${isActive
+            ? `bg-[${COLORS.primary}] text-white`
+            : `text-[${COLORS.darkText}] hover:bg-[${COLORS.primary}] hover:text-white`
+          }`
+        }
+        style={({ isActive }) => ({
+          backgroundColor: isActive ? COLORS.primary : 'transparent',
+          color: isActive ? COLORS.white : COLORS.darkText,
+        })}
+        onClick={() => {
+          closeDropdown();
+          onItemClick?.();
+        }}
+      >
+        {item.label}
+      </NavLink>
+    ))
+  ), [items, closeDropdown, onItemClick]);
+
+  const ChevronIcon = useMemo(() => (
+    <svg
+      className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      width={isMobile ? 22 : 18}
+      height={isMobile ? 22 : 18}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  ), [isOpen, isMobile]);
+
+  if (isMobile) {
     return (
-        <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white flex items-center transition-colors"
-            >
-                {label}
-                <svg
-                    className={`ml-1 h-4 w-4 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
+      <div className="relative">
+        <button
+          onClick={toggleDropdown}
+          className="flex justify-between items-center w-full px-4 py-3 rounded-md text-lg font-medium transition-colors"
+          style={{
+            color: COLORS.darkText,
+            backgroundColor: isOpen ? COLORS.lightGray : 'transparent',
+          }}
+          aria-expanded={isOpen}
+        >
+          <span className="font-semibold">{label}</span>
+          {ChevronIcon}
+        </button>
 
-            {isOpen && (
-                <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
-                    <div className="py-1">
-                        {items.map((item) => (
-                            <NavLink
-                                key={item.to}
-                                to={item.to}
-                                className={({ isActive }: { isActive: boolean }) =>
-                                    `block px-4 py-2 text-sm transition-colors ${isActive
-                                        ? 'bg-gray-700 text-white'
-                                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                    }`
-                                }
-                                onClick={() => setIsOpen(false)}
-                            >
-                                {item.label}
-                            </NavLink>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
+        {isOpen && (
+          <div className="ml-6 mt-2 space-y-2 animate-fadeIn border-l-2 border-[#1d5d43] pl-4">
+            {mobileContent}
+          </div>
+        )}
+      </div>
     );
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={toggleDropdown}
+        className="px-5 py-3 rounded-md text-lg font-semibold flex items-center transition-colors duration-200 hover:shadow-md"
+        style={{
+          color: COLORS.darkText,
+          backgroundColor: isOpen ? COLORS.lightGray : 'transparent',
+        }}
+        aria-expanded={isOpen}
+      >
+        {label}
+        <span className="ml-2">{ChevronIcon}</span>
+      </button>
+
+      {isOpen && (
+        <div 
+          className="absolute left-0 mt-1 rounded-lg shadow-xl z-50 animate-fadeIn border border-gray-200 overflow-hidden"
+          style={{ 
+            backgroundColor: COLORS.white,
+            minWidth: '280px'
+          }}
+        >
+          <div className="py-2">
+            {dropdownContent}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Hook personnalisé pour gérer la fermeture du menu mobile
+const useMobileMenu = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Ferme le menu lors du changement de route
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  const toggleMenu = useCallback(() => setIsMenuOpen(prev => !prev), []);
+  const closeMenu = useCallback(() => setIsMenuOpen(false), []);
+
+  return { isMenuOpen, toggleMenu, closeMenu };
+};
+
+// Hook personnalisé pour les classes actives
+const useNavLinkClass = (isMobile = false) => {
+  return useCallback(({ isActive }: { isActive: boolean }) => {
+    const baseClasses = isMobile
+      ? 'block px-2 py-2 rounded-md text-lg font-medium transition-all duration-200'
+      : 'px-4 py-1 rounded-md text-lg font-semibold transition-all duration-200 hover:shadow-md';
+    
+    return baseClasses;
+  }, [isMobile]);
+};
+
+// Composant Logo
+const Logo = () => (
+  <NavLink 
+    to="/" 
+    className="flex items-center hover:opacity-90 transition-opacity"
+    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+  >
+    <img
+      src="/assets/logo.png"
+      alt="Logo Ciaivertes"
+      className="h-20 w-auto"
+      loading="eager"
+    />
+    <span 
+      className="ml-3 text-3xl font-bold"
+      style={{ color: COLORS.primary }}
+    >
+      Ciaivertes
+    </span>
+  </NavLink>
+);
+
+// Composant MobileMenuButton
+interface MobileMenuButtonProps {
+  isOpen: boolean;
+  onClick: () => void;
+}
+
+const MobileMenuButton = ({ isOpen, onClick }: MobileMenuButtonProps) => (
+  <button
+    onClick={onClick}
+    className="md:hidden inline-flex items-center justify-center p-3 rounded-md transition-colors"
+    style={{
+      color: COLORS.primary,
+      backgroundColor: COLORS.lightGray,
+    }}
+    aria-expanded={isOpen}
+    aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+  >
+    {isOpen ? (
+      <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    ) : (
+      <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    )}
+  </button>
+);
+////////////////////////////////////////////////////////////////////
+// Données de navigation avec labels complets
+const NAV_LINKS: NavLinkItem[] = [
+  { type: 'link', to: '/', label: 'Accueil' },
+  {
+    type: 'dropdown',
+    label: 'À propos',
+    submenu: [
+      { to: '/about/equipe', label: 'Notre équipe' },
+      { to: '/abouts', label: 'Notre histoire' },
+      { to: '/temoignages', label: 'Témoignages' },
+      { to: "/guide", label: "Guide d'utilisation de charbon MiMIN" },
+      { to: '/produits-partenaires', label: 'Nos Produits & Partenaires' },
+    ]
+  },
+  { type: 'link', to: '/services', label: 'Services' },
+  { type: 'link', to: '/blogs', label: 'Blogs' },
+  { type: 'link', to: '/contact', label: 'Contact' },
+  { type: 'link', to: '/careers', label: 'Offres' },
+];
+
+// Composant DesktopNavLinks
+const DesktopNavLinks = ({ closeMenu }: { closeMenu: () => void }) => {
+  const getNavLinkClass = useNavLinkClass();
+
+  return (
+    <>
+      {NAV_LINKS.map((link) => {
+        if (link.type === 'dropdown') {
+          return (
+            <div key={`${link.label}-${link.type}`}>
+              <Dropdown
+                label={link.label}
+                items={link.submenu}
+              />
+            </div>
+          );
+        }
+
+        return (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={getNavLinkClass}
+            style={({ isActive }) => ({
+              color: isActive ? COLORS.white : COLORS.darkText,
+              backgroundColor: isActive ? COLORS.primary : 'transparent',
+            })}
+            onClick={closeMenu}
+          >
+            {link.label}
+          </NavLink>
+        );
+      })}
+    </>
+  );
+};
+
+// Composant MobileNavLinks
+const MobileNavLinks = ({ closeMenu }: { closeMenu: () => void }) => {
+  const getMobileNavLinkClass = useNavLinkClass(true);
+
+  return (
+    <>
+      {NAV_LINKS.map((link) => {
+        if (link.type === 'dropdown') {
+          return (
+            <Dropdown
+              key={`${link.label}-mobile`}
+              label={link.label}
+              items={link.submenu}
+              isMobile={true}
+              onItemClick={closeMenu}
+            />
+          );
+        }
+
+        return (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={getMobileNavLinkClass}
+            style={({ isActive }) => ({
+              color: isActive ? COLORS.white : COLORS.darkText,
+              backgroundColor: isActive ? COLORS.primary : 'transparent',
+            })}
+            onClick={closeMenu}
+          >
+            {link.label}
+          </NavLink>
+        );
+      })}
+    </>
+  );
 };
 
 // Composant Navbar principal
 const Navbar = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const { isMenuOpen, toggleMenu, closeMenu } = useMobileMenu();
 
-    const navLinks: NavLinkItem[] = [
-        { type: 'link', to: '/', label: 'Accueil' },
-        {
-            type: 'dropdown',
-            label: 'À propos',
-            submenu: [
-                { to: '/about/entreprise', label: 'Notre entreprise' },
-                { to: '/about/equipe', label: 'Notre équipe' },
-                { to: '/about/histoire', label: 'Notre histoire' },
-                { to: '/about/valeurs', label: 'Nos valeurs' },
-            ]
-        },
-        { type: 'link', to: '/contact', label: 'Contact' },
-        { type: 'link', to: '/projects', label: 'Projets' },
-        { type: 'link', to: '/blog', label: 'Blog' },
-        { type: 'link', to: '/faq', label: 'FAQ' },
-        { type: 'link', to: '/temoignages', label: 'Témoignages' },
-        { type: 'link', to: '/careers', label: 'Carrières' },
-    ];
+  return (
+    <nav 
+      className="fixed top-0 left-0 right-0 z-50 shadow-lg"
+      style={{ backgroundColor: COLORS.white }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-24">
+          {/* Logo */}
+          <Logo />
 
-    return (
-        <nav className="bg-white text-black shadow-lg fixed top-0 left-0 right-0 z-50">            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between p-1.5">
-
-                {/* Logo */}
-                <div className="flex-shrink-0">
-                    <NavLink to="/" className="flex items-center">
-                        <img
-                            src="/assets/logo.png"
-                            alt="Logo de l'entreprise"
-                            className="h-20 w-auto"  // Ajuste la hauteur selon tes besoins
-                        />
-                        <span className="ml-2 text-3xl font-bold text-black">Ciaivertes</span>
-                        {/* Optionnel : Ajouter un texte à côté du logo */}
-                        {/* <span className="ml-2 text-xl font-bold text-white">MonApp</span> */}
-                    </NavLink>
-                </div>
-
-                {/* Desktop Menu */}
-                <div className="hidden md:block">
-                    <div className="ml-10 flex items-baseline space-x-4">
-                        {navLinks.map((link) => {
-                            if (link.type === 'dropdown') {
-                                return (
-                                    <Dropdown
-                                        key={link.label}
-                                        label={link.label}
-                                        items={link.submenu}
-                                    />
-                                );
-                            }
-
-                            return (
-                                <NavLink
-                                    key={link.to}
-                                    to={link.to}
-                                    className={({ isActive }: { isActive: boolean }) =>
-                                        `px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                                            ? 'bg-gray-700 text-white'
-                                            : 'text-black hover:bg-gray-700 hover:text-white'
-                                        }`
-                                    }
-                                >
-                                    {link.label}
-                                </NavLink>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Mobile menu button */}
-                <div className="md:hidden">
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none transition-colors"
-                        aria-expanded={isMenuOpen}
-                    >
-                        <span className="sr-only">Ouvrir le menu</span>
-                        {/* Icon Hamburger */}
-                        <svg
-                            className={`${isMenuOpen ? 'hidden' : 'block'} h-6 w-6`}
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                        {/* Icon Close */}
-                        <svg
-                            className={`${isMenuOpen ? 'block' : 'hidden'} h-6 w-6`}
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
+          {/* Desktop Menu */}
+          <div className="hidden md:block">
+            <div className="flex items-center space-x-2">
+              <DesktopNavLinks closeMenu={closeMenu} />
             </div>
+          </div>
 
-            {/* Mobile Menu (conditionnel) */}
-            {isMenuOpen && (
-                <div className="md:hidden">
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                        {navLinks.map((link) => {
-                            if (link.type === 'dropdown') {
-                                return (
-                                    <Dropdown
-                                        key={link.label}
-                                        label={link.label}
-                                        items={link.submenu}
-                                        isMobile={true}
-                                        onItemClick={() => setIsMenuOpen(false)}
-                                    />
-                                );
-                            }
-
-                            return (
-                                <NavLink
-                                    key={link.to}
-                                    to={link.to}
-                                    className={({ isActive }: { isActive: boolean }) =>
-                                        `block px-3 py-2 rounded-md text-base font-medium transition-colors ${isActive
-                                            ? 'bg-gray-700 text-white'
-                                            : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                        }`
-                                    }
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    {link.label}
-                                </NavLink>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+          {/* Mobile menu button */}
+          <MobileMenuButton isOpen={isMenuOpen} onClick={toggleMenu} />
         </div>
-        </nav>
-    );
+
+        {/* Mobile Menu */}
+        <div 
+          className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+            isMenuOpen ? 'max-h-[600px] opacity-100 py-4' : 'max-h-0 opacity-0'
+          }`}
+          style={{ backgroundColor: COLORS.lightGray }}
+        >
+          <div className="space-y-3">
+            <MobileNavLinks closeMenu={closeMenu} />
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
 };
 
-export default Navbar;
+// Ajout du style global pour les animations
+const GlobalStyles = () => (
+  <style>{`
+    .animate-fadeIn {
+      animation: fadeIn 0.25s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Hover styles for desktop */
+    @media (min-width: 768px) {
+      a:hover {
+        background-color: ${COLORS.primary} !important;
+        color: ${COLORS.white} !important;
+      }
+      
+      button:hover {
+        background-color: ${COLORS.lightGray} !important;
+      }
+    }
+  `}</style>
+);
+
+export default function NavbarWithStyles() {
+  return (
+    <>
+      <GlobalStyles />
+      <Navbar />
+    </>
+  );
+}
