@@ -1,41 +1,9 @@
 import React from 'react';
 
-interface TemoignageProps {
-  nom: string;
-  message: string;
-  poste?: string;
-  image?: string;
-}
 
-const TemoignageCard: React.FC<TemoignageProps> = ({ nom, message, poste, image }) => {
-  return (
-    <div className="temoignage-card">
-      {image && <img src={image} alt={nom} className="temoignage-image" />}
-      <div className="temoignage-content">
-        <p className="temoignage-message">"{message}"</p>
-        <h4 className="temoignage-nom">{nom}</h4>
-        {poste && <p className="temoignage-poste">{poste}</p>}
-      </div>
-    </div>
-  );
-};
 
 const Temoignage: React.FC = () => {
-  const temoignages = [
-    {
-      nom: 'Jean Dupont',
-      message: 'Excellent service, je recommande vivement !',
-      poste: 'Client satisfait',
-      image: '/assets/testimonials/jean.jpg' // Remplacez par le chemin réel de l'image
-    },
-    {
-      nom: 'Marie Martin',
-      message: 'Une équipe professionnelle et à l\'écoute.',
-      poste: 'Partenaire',
-      image: '/assets/testimonials/marie.jpg'
-    },
-    // Ajoutez d'autres témoignages ici
-  ];
+
 
   return (
     <section>

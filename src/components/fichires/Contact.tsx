@@ -1,7 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faPhone, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 function Contact() {
-  const newLocal = "6";
   return (
     <section>
       {/* Page Title */}

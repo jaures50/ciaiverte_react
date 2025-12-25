@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import Navbar from './NavBar';
-import Footer from './Header&Footer/Footer';
 import Footers from './Footers';
 
 // Si tu veux un Layout avec props enfants (alternative)

@@ -200,7 +200,7 @@ const useNavLinkClass = (isMobile = false) => {
       ? 'block px-2 py-2 rounded-md text-lg font-medium transition-all duration-200'
       : 'px-4 py-1 rounded-md text-lg font-semibold transition-all duration-200 hover:shadow-md';
     
-    return baseClasses;
+    return `${baseClasses} ${isActive ? 'bg-[#1d5d43] text-white' : 'text-[#1d5d43] hover:bg-[#1d5d43] hover:text-white'}`;
   }, [isMobile]);
 };
 
